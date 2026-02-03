@@ -88,6 +88,7 @@
       width: min(520px, 92%);
       height: 150px;
       margin: 0 auto;
+      touch-action: none;
     }
 
     button {
@@ -101,6 +102,7 @@
       border: none;
       cursor: pointer;
       box-shadow: 0 10px 24px rgba(0,0,0,.14);
+      user-select: none;
     }
 
     #yesBtn {
@@ -165,13 +167,11 @@
 
 <canvas id="confettiCanvas"></canvas>
 
-<!-- 🎵 MUSIC -->
 <audio id="bgMusic" loop>
   <source src="love.mp3" type="audio/mpeg">
 </audio>
 
 <main class="card">
-
   <h1>Rischika, will you be my Valentine? 💕</h1>
   <div class="music-hint">✨ For the full magic, keep the music on 🔊</div>
 
@@ -240,8 +240,51 @@
     detectBeat();
   }
 
+  /* 😈 NO BUTTON RUNS AWAY */
+  let yesScale = 1;
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function growYes() {
+    yesScale = Math.min(2.4, yesScale + 0.12);
+    yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+  }
+
+  function moveNo(x, y) {
+    const z = zone.getBoundingClientRect();
+    const b = noBtn.getBoundingClientRect();
+
+    let dx = (b.left + b.width / 2) - x;
+    let dy = (b.top + b.height / 2) - y;
+    let mag = Math.hypot(dx, dy) || 1;
+
+    dx /= mag;
+    dy /= mag;
+
+    let left = (b.left - z.left) + dx * 160;
+    let top  = (b.top  - z.top ) + dy * 160;
+
+    noBtn.style.left = clamp(left, 0, z.width - b.width) + "px";
+    noBtn.style.top  = clamp(top,  0, z.height - b.height) + "px";
+    noBtn.style.transform = "none";
+
+    growYes();
+  }
+
+  zone.addEventListener("pointermove", e => {
+    const b = noBtn.getBoundingClientRect();
+    const dist = Math.hypot(
+      (b.left + b.width / 2) - e.clientX,
+      (b.top + b.height / 2) - e.clientY
+    );
+    if (dist < 150) moveNo(e.clientX, e.clientY);
+  });
+
   noBtn.addEventListener("click", e => e.preventDefault());
 
+  /* 💖 YES CLICK */
   yesBtn.addEventListener("click", () => {
     zone.style.display = "none";
     hint.style.display = "none";
@@ -249,15 +292,14 @@
 
     music.volume = 0;
     music.play();
-
-    let vol = 0;
-    const fade = setInterval(() => {
-      vol += 0.05;
-      music.volume = Math.min(vol, 0.7);
-      if (vol >= 0.7) clearInterval(fade);
-    }, 120);
-
     startMusicAnalysis();
+
+    let v = 0;
+    const fade = setInterval(() => {
+      v += 0.05;
+      music.volume = Math.min(v, 0.7);
+      if (v >= 0.7) clearInterval(fade);
+    }, 120);
   });
 </script>
 
